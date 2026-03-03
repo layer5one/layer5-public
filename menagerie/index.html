@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Menagerie | Layer 5</title>
+    <link rel="stylesheet" href="style.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Inter:wght@400;600;800&display=swap"
+        rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+
+<body>
+    <div class="glass-overlay"></div>
+
+    <nav class="sidebar">
+        <div class="brand">
+            <i data-lucide="dna" class="brand-icon"></i>
+            <h2>Menagerie</h2>
+            <span class="version">v1.0.0</span>
+        </div>
+
+        <div class="nav-section">
+            <h3>Archived Lineages</h3>
+            <ul id="nav-archived">
+                <li onclick="loadModel('historical', this)"><i data-lucide="library"></i> Historical (GPT-1/2)</li>
+                <li onclick="loadModel('rwkv', this)" class="active"><i data-lucide="git-commit"></i> RWKV (RNN)</li>
+                <li onclick="loadModel('ssm-mamba', this)"><i data-lucide="git-branch"></i> Mamba (SSM)</li>
+                <li onclick="loadModel('liquid', this)"><i data-lucide="droplets"></i> Liquid LFMs</li>
+                <li onclick="loadModel('matmul-free', this)"><i data-lucide="cpu"></i> MatMul-Free</li>
+                <li onclick="loadModel('hybrid', this)"><i data-lucide="layers"></i> Hybrids (Jamba)</li>
+                <li onclick="loadModel('retnet', this)"><i data-lucide="network"></i> RetNet</li>
+                <li onclick="loadModel('diffusion', this)"><i data-lucide="wand-2"></i> Diffusion-LM</li>
+            </ul>
+        </div>
+
+        <div class="nav-section">
+            <h3>Frontier Modalities</h3>
+            <ul id="nav-frontier">
+                <li onclick="loadModel('audio-native', this)"><i data-lucide="mic"></i> Audio-Native (Moshi)</li>
+                <li onclick="loadModel('robotics', this)"><i data-lucide="bot"></i> Robotics (VLA)</li>
+                <li onclick="loadModel('unobtainables', this)"><i data-lucide="lock"></i> The Unobtainables</li>
+            </ul>
+        </div>
+
+        <div class="tier-selector">
+            <h3>Your Hardware</h3>
+            <select id="hardware-tier">
+                <option value="tier1">🏎️ Tier 1 (16GB+ VRAM)</option>
+                <option value="tier2">🚙 Tier 2 (8GB VRAM / Mac)</option>
+                <option value="tier3">🚲 Tier 3 (CPU Only / Scavenger)</option>
+            </select>
+        </div>
+    </nav>
+
+    <main class="content-area">
+        <header>
+            <h1 id="model-title">RWKV (Receptance Weighted Key Value)</h1>
+            <div class="status-badge" id="model-status">
+                <span class="pulse"></span> ONLINE
+            </div>
+        </header>
+
+        <div class="hero-stats">
+            <div class="stat-box">
+                <span class="label">Architecture</span>
+                <span class="value" id="stat-arch">RNN</span>
+            </div>
+            <div class="stat-box">
+                <span class="label">Memory Scaling</span>
+                <span class="value" id="stat-memory">O(1) Linear</span>
+            </div>
+            <div class="stat-box">
+                <span class="label">Recommended Interface</span>
+                <span class="value" id="stat-interface">RWKV Runner</span>
+            </div>
+        </div>
+
+        <section class="installation-panel">
+            <div class="panel-header">
+                <i data-lucide="terminal"></i> Deployment Guide
+                <button class="copy-btn" onclick="copyInstall()">Copy Script</button>
+            </div>
+            <pre><code id="install-code" class="language-bash">
+# RWKV is best run via the official desktop app
+# Download RWKV Runner from GitHub releases
+
+# Or deploy via Python:
+git clone https://github.com/BlinkDL/ChatRWKV
+cd ChatRWKV
+pip install -r requirements.txt
+python chat.py
+            </code></pre>
+            <div class="tier-warning" id="tier-warning">
+                ⚠️ Requires 8GB VRAM for 3B parameter model.
+            </div>
+        </section>
+
+        <section class="description-panel" id="model-description">
+            <p>RWKV is an RNN with Transformer-level performance. It completely drops the KV cache, meaning inference
+                uses a fixed amount of VRAM regardless of how long the context window gets.</p>
+        </section>
+
+    </main>
+
+    <script src="script.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>

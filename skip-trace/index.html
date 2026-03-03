@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Skip Trace — Maricopa County</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&display=swap');
+
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+  :root {
+    --bg: #0a0a0a; --bg1: #111; --bg2: #0d0d0d; --border: #222; --border2: #1a1a1a;
+    --text: #e0e0e0; --dim: #888; --dimmer: #666; --dimmest: #555; --ghost: #444;
+    --accent: #00ffaa; --red: #ff4444; --amber: #ffaa00; --green: #22cc66; --cyan: #00ccff;
+    --font: 'JetBrains Mono', 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  }
+
+  html, body { height:100%; overflow:hidden; background:var(--bg); color:var(--text); font-family:var(--font); font-size:13px; }
+
+  #app { display:flex; flex-direction:column; height:100%; }
+  #header { background:var(--bg1); border-bottom:1px solid var(--border); flex-shrink:0; }
+  #header-top { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; }
+  #title { font-size:18px; font-weight:800; letter-spacing:3px; color:var(--accent); }
+  #subtitle { font-size:11px; color:var(--dimmer); letter-spacing:1px; margin-top:2px; }
+  #header-buttons { display:flex; gap:8px; }
+  #coord-bar { padding:4px 16px 8px; font-size:11px; color:var(--dimmest); letter-spacing:0.5px; display:none; }
+  #error-bar { padding:8px 16px; background:#331111; color:#ff6666; font-size:12px; border-top:1px solid #441111; display:none; }
+  #stats-bar { display:none; gap:16px; padding:8px 16px; background:var(--bg2); border-top:1px solid var(--border2); font-size:11px; flex-wrap:wrap; }
+  #proxy-bar { padding:4px 16px; font-size:10px; letter-spacing:0.5px; border-top:1px solid var(--border2); display:none; }
+  .proxy-on { color:var(--cyan); }
+  .proxy-off { color:var(--dimmest); }
+
+  #body { display:flex; flex:1; overflow:hidden; }
+  #map { flex:1; min-width:0; z-index:1; }
+  #sidebar { width:400px; background:var(--bg); border-left:1px solid var(--border); overflow-y:auto; flex-shrink:0; z-index:2; }
+
+  @media (max-width: 768px) {
+    #body { flex-direction:column; }
+    #sidebar { width:100%; height:45%; border-left:none; border-top:2px solid var(--accent); flex-shrink:0; }
+    #map { flex:1; }
+    .btn { font-size:11px !important; padding:7px 12px !important; }
+  }
+
+  .btn {
+    padding:8px 16px; border:none; border-radius:4px; cursor:pointer;
+    font-family:var(--font); font-size:12px; font-weight:600; letter-spacing:1px;
+    transition: opacity 0.2s;
+  }
+  .btn:disabled { opacity:0.4; cursor:not-allowed; }
+  .btn:active:not(:disabled) { opacity:0.7; }
+  #btn-gps { background:#1a1a1a; color:var(--accent); border:1px solid rgba(0,255,170,0.25); }
+  #btn-query { background:var(--accent); color:#000; font-weight:800; padding:8px 20px; }
+
+  #legend { padding:12px 16px; border-bottom:1px solid var(--border2); background:var(--bg2); }
+  .legend-title { font-size:10px; color:var(--dimmest); letter-spacing:2px; margin-bottom:8px; }
+  .legend-row { display:flex; align-items:center; gap:8px; font-size:11px; color:var(--dim); margin-bottom:4px; }
+  .legend-dot { width:10px; height:10px; border-radius:2px; flex-shrink:0; }
+
+  #detail-card { display:none; border-bottom:2px solid rgba(0,255,170,0.2); }
+  #detail-header { padding:10px 16px; background:var(--bg1); font-size:11px; letter-spacing:2px; color:var(--accent); display:flex; align-items:center; gap:12px; }
+  #detail-close { cursor:pointer; color:var(--dimmer); font-size:16px; }
+  #detail-close:hover { color:var(--text); }
+  #detail-body { padding:0 16px 16px; }
+
+  .section { margin-top:14px; }
+  .section-title { font-size:10px; color:var(--dimmest); letter-spacing:2px; margin-bottom:8px; border-bottom:1px solid var(--border2); padding-bottom:4px; }
+  .field { display:flex; justify-content:space-between; padding:3px 0; gap:12px; }
+  .field-label { color:var(--dimmer); flex-shrink:0; font-size:12px; }
+  .field-value { color:var(--text); text-align:right; word-break:break-word; font-size:12px; }
+  .field-value.bold { font-weight:700; }
+  .field-value.warn { color:var(--red); }
+  .field-value.good { color:var(--green); }
+  .field-value.info { color:var(--cyan); }
+
+  .acc-link { margin-top:6px; }
+  .acc-link a { color:var(--amber); font-size:12px; text-decoration:none; }
+  .acc-link a:hover { text-decoration:underline; }
+
+  .out-of-state { color:#ff8800; font-size:11px; margin-top:4px; padding:4px 8px; background:#221800; border-radius:3px; }
+  .addr-verdict { font-size:12px; margin-top:8px; padding:6px 8px; background:var(--bg1); border-radius:3px; line-height:1.4; }
+  .deed-age { font-size:12px; margin-top:2px; margin-bottom:4px; }
+
+  .rental-hit { color:#000; background:var(--red); padding:6px 10px; border-radius:3px; font-weight:700; font-size:12px; margin-top:6px; letter-spacing:0.5px; }
+  .rental-miss { color:var(--green); font-size:11px; margin-top:4px; padding:4px 8px; background:#0a1a0a; border-radius:3px; }
+
+  .api-loading { padding:20px 16px; color:var(--dimmest); font-size:12px; text-align:center; }
+  .api-loading .spinner { display:inline-block; animation:spin 1s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .api-error { padding:8px; background:#331111; color:#ff6666; font-size:11px; border-radius:3px; margin-top:8px; }
+
+  .val-row { display:flex; justify-content:space-between; padding:2px 0; font-size:11px; }
+  .val-year { color:var(--dimmest); }
+  .val-amount { color:var(--text); }
+
+  #list-header {
+    padding:12px 16px; font-size:11px; color:var(--dimmest); letter-spacing:2px;
+    border-bottom:1px solid var(--border2); position:sticky; top:0; background:var(--bg); z-index:1;
+  }
+  #list-header .hint { letter-spacing:0; color:var(--ghost); }
+  .empty-msg { padding:24px 16px; color:var(--ghost); text-align:center; font-size:12px; line-height:1.6; }
+
+  .parcel-row {
+    padding:10px 16px; border-bottom:1px solid var(--border2); cursor:pointer;
+    transition: background 0.15s; border-left:4px solid #333;
+  }
+  .parcel-row:hover { background:#151515; }
+  .parcel-row.selected { background:#1a2a1a; }
+  .row-owner { font-weight:700; font-size:13px; color:var(--text); margin-bottom:2px; }
+  .row-addr { font-size:11px; color:var(--dim); margin-bottom:4px; }
+  .row-meta { display:flex; gap:10px; font-size:10px; flex-wrap:wrap; }
+  .row-apn { color:var(--dimmest); }
+  .row-deed { color:var(--dim); }
+  .badge { font-weight:700; letter-spacing:1px; padding:1px 5px; border-radius:2px; font-size:10px; }
+  .badge-corp { color:var(--amber); background:#332200; }
+  .badge-absentee { color:var(--red); background:#331111; }
+
+  .leaflet-control-attribution { font-size:9px !important; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="header">
+    <div id="header-top">
+      <div>
+        <div id="title">SKIP TRACE</div>
+        <div id="subtitle">Maricopa County · 500 ft Radius · Assessor API</div>
+      </div>
+      <div id="header-buttons">
+        <button class="btn" id="btn-gps" onclick="geoLocate()">◎ GPS</button>
+        <button class="btn" id="btn-query" onclick="queryParcels()" disabled>▶ QUERY</button>
+      </div>
+    </div>
+    <div id="coord-bar"></div>
+    <div id="proxy-bar"></div>
+    <div id="error-bar"></div>
+    <div id="stats-bar"></div>
+  </div>
+
+  <div id="body">
+    <div id="map"></div>
+    <div id="sidebar">
+      <div id="legend">
+        <div class="legend-title">MAP LEGEND</div>
+        <div class="legend-row"><span class="legend-dot" style="background:#22cc66"></span> Mail = Property (likely owner-occupied)</div>
+        <div class="legend-row"><span class="legend-dot" style="background:#ff4444"></span> Mail ≠ Property (absentee / rental)</div>
+        <div class="legend-row"><span class="legend-dot" style="background:#ffaa00"></span> Corporate entity (LLC/Trust/Inc)</div>
+        <div class="legend-row"><span class="legend-dot" style="background:#555"></span> Insufficient data</div>
+      </div>
+
+      <div id="detail-card">
+        <div id="detail-header">
+          <span id="detail-close" onclick="closeDetail()">✕</span>
+          <span>PARCEL DETAIL</span>
+        </div>
+        <div id="detail-body"></div>
+      </div>
+
+      <div id="list-header">ALL PARCELS (0)</div>
+      <div id="parcel-list">
+        <div class="empty-msg">Tap the map to set a point, then hit QUERY.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   CONFIG
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Bridge detection ──
+   When served from Layer5 bridge (or any real server), Assessor API
+   calls route through /api/assessor/ — auth is injected server-side.
+   When opened as file://, falls back to direct mode (CORS will block
+   Assessor API but ArcGIS still works). */
+const ON_BRIDGE = location.hostname === 'bridge.layer5.one' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+const BRIDGE_MODE = (location.protocol === 'http:' || location.protocol === 'https:');
+const ASSESSOR_BASE = ON_BRIDGE ? '/api/assessor' : BRIDGE_MODE ? 'https://bridge.layer5.one/api/assessor' : 'https://mcassessor.maricopa.gov';
+
+/* Token only needed in direct mode (file://) — bridge injects it server-side */
+const API_TOKEN = BRIDGE_MODE ? '' : '59c2ca1c-7581-4801-a5f4-fbb698fd49d2';
+
+/* ArcGIS (public, no auth, no CORS issues) */
+const ARCGIS_URL = 'https://gis.mcassessor.maricopa.gov/arcgis/rest/services/Parcels/MapServer/0/query';
+const ACC_URL    = 'https://ecorp.azcc.gov/EntitySearch/Index';
+const RADIUS_FT  = 500;
+const CORP_RE    = /\b(LLC|L\.L\.C|INC|CORP|CORPORATION|LTD|LIMITED|TRUST|TRUSTEE|REVOCABLE|IRREVOCABLE|LIVING TRUST|FAMILY TRUST|HOLDINGS|PROPERTIES|VENTURES|CAPITAL|INVESTMENTS|ENTERPRISES|GROUP|PARTNERS|LP|L\.P)\b/i;
+
+/*
+   ArcGIS fields — include BOTH concatenated and component fields.
+   The concatenated fields (MAIL_ADDRESS, PHYSICAL_ADDRESS) are sometimes
+   null even when the component fields have data. We build addresses from
+   whichever source is populated.
+*/
+const ARCGIS_FIELDS = [
+  'APN','APN_DASH','OWNER_NAME','INCAREOF',
+  'MAIL_ADDRESS','MAIL_ADDR1','MAIL_ADDR2','MAIL_CITY','MAIL_STATE','MAIL_ZIP','MAIL_CNTRY',
+  'PHYSICAL_ADDRESS','PHYSICAL_STREET_NUM','PHYSICAL_STREET_DIR','PHYSICAL_STREET_NAME',
+  'PHYSICAL_STREET_TYPE','PHYSICAL_CITY','PHYSICAL_ZIP',
+  'PHYSICAL_STREET_SUFFIX','PHYSICAL_STREET_POSTDIR',
+  'DEED_DATE'
+].join(',');
+
+/* ═══════════════════════════════════════════════════════════════════
+   STATE
+   ═══════════════════════════════════════════════════════════════════ */
+let center = null;
+let parcels = [];
+let selectedApn = null;
+let detailCache = {};
+
+/* ═══════════════════════════════════════════════════════════════════
+   INIT
+   ═══════════════════════════════════════════════════════════════════ */
+// Show connection status
+const proxyBar = document.getElementById('proxy-bar');
+if (BRIDGE_MODE) {
+  proxyBar.innerHTML = `<span class="proxy-on">▸ BRIDGE MODE — API routed through ${location.origin}/api/assessor</span>`;
+  proxyBar.style.display = 'block';
+} else {
+  proxyBar.innerHTML = `<span class="proxy-off">▸ LOCAL MODE — Assessor API may fail (CORS). Serve via Layer5 bridge for full access.</span>`;
+  proxyBar.style.display = 'block';
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MAP
+   ═══════════════════════════════════════════════════════════════════ */
+const map = L.map('map', { center: [33.4484, -112.074], zoom: 13, zoomControl: true });
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; OSM &copy; CARTO', maxZoom: 20
+}).addTo(map);
+
+let centerMarker = null;
+let overlayGroup = L.layerGroup().addTo(map);
+
+map.on('click', e => setCenter(e.latlng.lat, e.latlng.lng));
+
+/* ═══════════════════════════════════════════════════════════════════
+   HELPERS
+   ═══════════════════════════════════════════════════════════════════ */
+function toWebMercator(lat, lng) {
+  const x = (lng * 20037508.34) / 180;
+  const latRad = (lat * Math.PI) / 180;
+  const y = (Math.log(Math.tan(Math.PI / 4 + latRad / 2)) / Math.PI) * 20037508.34;
+  return { x, y };
+}
+
+function calcDeedAge(ts) {
+  if (!ts) return null;
+  const d = new Date(ts);
+  if (isNaN(d)) return null;
+  const yrs = (Date.now() - d) / (365.25 * 864e5);
+  if (yrs < 1) {
+    const mo = Math.floor(yrs * 12);
+    return { years: 0, months: mo, label: mo + ' mo ago' };
+  }
+  const y = Math.floor(yrs);
+  return { years: y, months: 0, label: y + ' yr' + (y !== 1 ? 's' : '') + ' ago' };
+}
+
+/* Build addresses from ArcGIS attributes, preferring concatenated field
+   but falling back to component fields when it's null/empty */
+function buildPhysical(a) {
+  if (a.PHYSICAL_ADDRESS) return a.PHYSICAL_ADDRESS.trim();
+  const parts = [
+    a.PHYSICAL_STREET_NUM, a.PHYSICAL_STREET_DIR, a.PHYSICAL_STREET_NAME,
+    a.PHYSICAL_STREET_TYPE, a.PHYSICAL_STREET_SUFFIX, a.PHYSICAL_STREET_POSTDIR
+  ].filter(Boolean);
+  const street = parts.join(' ');
+  const city = [a.PHYSICAL_CITY, a.PHYSICAL_ZIP].filter(Boolean).join(' ');
+  return [street, city].filter(Boolean).join(', ');
+}
+
+function buildMail(a) {
+  if (a.MAIL_ADDRESS) return a.MAIL_ADDRESS.trim();
+  const lines = [a.MAIL_ADDR1, a.MAIL_ADDR2].filter(Boolean);
+  const city = [a.MAIL_CITY, a.MAIL_STATE, a.MAIL_ZIP].filter(Boolean).join(' ');
+  return [...lines, city].filter(Boolean).join(', ');
+}
+
+/* Compare mailing vs physical address.
+   Returns MATCH, MISMATCH, or UNKNOWN.
+   UNKNOWN when either address is empty/missing — NOT a mismatch. */
+function matchAddr(mail, phys) {
+  const m = (mail || '').trim();
+  const p = (phys || '').trim();
+
+  // If either is empty, we genuinely don't know
+  if (!m || !p) return 'UNKNOWN';
+
+  const clean = s => s.replace(/[^a-z0-9]/gi, '').toLowerCase();
+  const mc = clean(m), pc = clean(p);
+
+  // Direct match or substring
+  if (mc === pc || mc.startsWith(pc) || pc.startsWith(mc)) return 'MATCH';
+
+  // Compare house number + street name only (ignore city/zip differences)
+  const mNum = m.match(/^\d+/)?.[0];
+  const pNum = p.match(/^\d+/)?.[0];
+  if (mNum && pNum && mNum === pNum) {
+    const mSt = clean(m.replace(/^\d+\s*/, '').split(/,|\s{2,}/)[0]);
+    const pSt = clean(p.replace(/^\d+\s*/, '').split(/,|\s{2,}/)[0]);
+    if (mSt && pSt && mSt === pSt) return 'MATCH';
+  }
+
+  return 'MISMATCH';
+}
+
+function isCorp(name) { return name ? CORP_RE.test(name) : false; }
+
+function esc(s) {
+  if (!s) return '';
+  const el = document.createElement('span');
+  el.textContent = s;
+  return el.innerHTML;
+}
+
+function fmtCurrency(v) {
+  if (v == null || v === '') return 'N/A';
+  const n = Number(v);
+  return isNaN(n) ? esc(String(v)) : '$' + n.toLocaleString();
+}
+
+function fmtDate(v) {
+  if (!v) return 'N/A';
+  const d = new Date(v);
+  return isNaN(d) ? esc(String(v)) : d.toLocaleDateString();
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ASSESSOR API (authed, routed through proxy if enabled)
+   ═══════════════════════════════════════════════════════════════════ */
+async function assessorFetch(path) {
+  const headers = {};
+  if (!BRIDGE_MODE) {
+    headers['AUTHORIZATION'] = API_TOKEN;
+    headers['User-Agent'] = 'null';
+  }
+  const resp = await fetch(ASSESSOR_BASE + path, { headers });
+  if (!resp.ok) {
+    if (resp.status === 401) throw new Error('401 — Token rejected');
+    if (resp.status === 404) return null;
+    throw new Error(`${resp.status} ${resp.statusText}`);
+  }
+  const text = await resp.text();
+  if (!text || text.trim() === '') return null;
+  try { return JSON.parse(text); }
+  catch { return text; }
+}
+
+async function fetchParcelDetail(apn) {
+  const clean = apn.replace(/[-.\s]/g, '');
+  const results = await Promise.allSettled([
+    assessorFetch(`/parcel/${clean}`),
+    assessorFetch(`/parcel/${clean}/owner-details`),
+    assessorFetch(`/parcel/${clean}/valuations`),
+    assessorFetch(`/parcel/${clean}/residential-details`),
+    assessorFetch(`/search/rental/?q=${encodeURIComponent(apn)}`),
+  ]);
+
+  return {
+    parcel:      results[0].status === 'fulfilled' ? results[0].value : null,
+    owner:       results[1].status === 'fulfilled' ? results[1].value : null,
+    valuations:  results[2].status === 'fulfilled' ? results[2].value : null,
+    residential: results[3].status === 'fulfilled' ? results[3].value : null,
+    rental:      results[4].status === 'fulfilled' ? results[4].value : null,
+    errors: results.filter(r => r.status === 'rejected').map(r => r.reason?.message),
+  };
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   UI
+   ═══════════════════════════════════════════════════════════════════ */
+function setCenter(lat, lng) {
+  center = { lat, lng };
+  map.setView([lat, lng], 17);
+  if (centerMarker) centerMarker.remove();
+  centerMarker = L.circleMarker([lat, lng], {
+    radius: 8, color: '#00ffaa', fillColor: '#00ffaa', fillOpacity: 1, weight: 2
+  }).addTo(map);
+  const cb = document.getElementById('coord-bar');
+  cb.textContent = lat.toFixed(6) + ', ' + lng.toFixed(6);
+  cb.style.display = 'block';
+  document.getElementById('btn-query').disabled = false;
+}
+
+function showError(msg) {
+  const el = document.getElementById('error-bar');
+  if (msg) { el.textContent = msg; el.style.display = 'block'; }
+  else { el.style.display = 'none'; }
+}
+
+function updateStats() {
+  const bar = document.getElementById('stats-bar');
+  if (!parcels.length) { bar.style.display = 'none'; return; }
+  const m = parcels.filter(p => p.addrStatus === 'MATCH').length;
+  const mm = parcels.filter(p => p.addrStatus === 'MISMATCH').length;
+  const co = parcels.filter(p => p.isCorp).length;
+  const un = parcels.filter(p => p.addrStatus === 'UNKNOWN').length;
+  bar.innerHTML = `
+    <span style="color:#aaa">${parcels.length} parcels</span>
+    <span style="color:#22cc66">● ${m} owner-occ</span>
+    <span style="color:#ff4444">● ${mm} absentee</span>
+    <span style="color:#ffaa00">● ${co} corporate</span>
+    ${un ? `<span style="color:#888">● ${un} unknown</span>` : ''}
+  `;
+  bar.style.display = 'flex';
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   GEOLOCATION
+   ═══════════════════════════════════════════════════════════════════ */
+function geoLocate() {
+  if (!navigator.geolocation) { showError('Geolocation not supported'); return; }
+  const btn = document.getElementById('btn-gps');
+  btn.textContent = '⟳ LOCATING…'; btn.disabled = true;
+  navigator.geolocation.getCurrentPosition(
+    pos => { setCenter(pos.coords.latitude, pos.coords.longitude); btn.textContent = '◎ GPS'; btn.disabled = false; },
+    err => { showError('Location: ' + err.message); btn.textContent = '◎ GPS'; btn.disabled = false; },
+    { enableHighAccuracy: true, timeout: 15000 }
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   STAGE 1: ArcGIS Spatial Query (public, no auth)
+   ═══════════════════════════════════════════════════════════════════ */
+async function queryParcels() {
+  if (!center) { showError('Set a location first'); return; }
+  showError(null);
+  parcels = [];
+  selectedApn = null;
+  detailCache = {};
+  document.getElementById('detail-card').style.display = 'none';
+
+  const btn = document.getElementById('btn-query');
+  btn.textContent = '⟳ QUERYING…'; btn.disabled = true;
+
+  try {
+    const { x, y } = toWebMercator(center.lat, center.lng);
+    const params = new URLSearchParams({
+      f: 'json',
+      geometry: JSON.stringify({ x, y, spatialReference: { wkid: 102100 } }),
+      geometryType: 'esriGeometryPoint',
+      spatialRel: 'esriSpatialRelIntersects',
+      distance: RADIUS_FT * 0.3048,
+      units: 'esriSRUnit_Meter',
+      outFields: ARCGIS_FIELDS,
+      returnGeometry: 'true',
+      outSR: '4326'
+    });
+
+    const resp = await fetch(ARCGIS_URL + '?' + params);
+    const data = await resp.json();
+
+    if (data.error) throw new Error(data.error.message || 'ArcGIS error');
+    if (!data.features?.length) {
+      showError('No parcels in 500 ft radius');
+      renderList(); updateStats();
+      return;
+    }
+
+    parcels = data.features.map(f => {
+      const a = f.attributes;
+      const physical = buildPhysical(a);
+      const mail = buildMail(a);
+      return {
+        apn: a.APN_DASH || a.APN,
+        owner: a.OWNER_NAME,
+        inCareOf: a.INCAREOF,
+        physical, mail,
+        mailState: a.MAIL_STATE,
+        mailCountry: a.MAIL_CNTRY,
+        addrStatus: matchAddr(mail, physical),
+        deedAge: calcDeedAge(a.DEED_DATE),
+        isCorp: isCorp(a.OWNER_NAME),
+        geometry: f.geometry
+      };
+    });
+
+    drawParcels();
+    renderList();
+    updateStats();
+  } catch (err) {
+    showError(err.message);
+  } finally {
+    btn.textContent = '▶ QUERY'; btn.disabled = false;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MAP
+   ═══════════════════════════════════════════════════════════════════ */
+function parcelColor(p) {
+  if (p.isCorp) return '#ffaa00';
+  if (p.addrStatus === 'MISMATCH') return '#ff4444';
+  if (p.addrStatus === 'MATCH') return '#22cc66';
+  return '#555';
+}
+
+function drawParcels() {
+  overlayGroup.clearLayers();
+  L.circle([center.lat, center.lng], {
+    radius: RADIUS_FT * 0.3048, color: '#00ffaa', weight: 1, dashArray: '6 4',
+    fillColor: '#00ffaa', fillOpacity: 0.04
+  }).addTo(overlayGroup);
+
+  parcels.forEach(p => {
+    if (!p.geometry?.rings) return;
+    const coords = p.geometry.rings[0].map(([lng, lat]) => [lat, lng]);
+    const col = parcelColor(p);
+    const poly = L.polygon(coords, { color: col, weight: 2, fillColor: col, fillOpacity: 0.15 }).addTo(overlayGroup);
+    poly.on('click', () => selectParcel(p.apn));
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   LIST
+   ═══════════════════════════════════════════════════════════════════ */
+function renderList() {
+  document.getElementById('list-header').innerHTML =
+    `ALL PARCELS (${parcels.length})` + (parcels.length ? '<span class="hint"> — tap for detail</span>' : '');
+
+  const container = document.getElementById('parcel-list');
+  if (!parcels.length) {
+    container.innerHTML = '<div class="empty-msg">Tap the map to set a point, then hit QUERY.</div>';
+    return;
+  }
+
+  container.innerHTML = parcels.map(p => {
+    const col = parcelColor(p);
+    const sel = p.apn === selectedApn ? ' selected' : '';
+    return `
+      <div class="parcel-row${sel}" style="border-left-color:${col}" onclick="selectParcel('${esc(p.apn)}')">
+        <div class="row-owner">${esc(p.owner) || 'NO OWNER'}</div>
+        <div class="row-addr">${esc(p.physical) || 'No address'}</div>
+        <div class="row-meta">
+          <span class="row-apn">${esc(p.apn)}</span>
+          ${p.deedAge ? `<span class="row-deed">Deed: ${p.deedAge.label}</span>` : ''}
+          ${p.isCorp ? '<span class="badge badge-corp">CORP</span>' : ''}
+          ${p.addrStatus === 'MISMATCH' ? '<span class="badge badge-absentee">ABSENTEE</span>' : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   STAGE 2: Assessor API Detail (on-tap, single parcel)
+   ═══════════════════════════════════════════════════════════════════ */
+async function selectParcel(apn) {
+  selectedApn = apn;
+  const p = parcels.find(x => x.apn === apn);
+  if (!p) return;
+
+  renderList();
+
+  const card = document.getElementById('detail-card');
+  const body = document.getElementById('detail-body');
+  card.style.display = 'block';
+
+  // Immediate: show ArcGIS data while API loads
+  body.innerHTML = renderQuickDetail(p) +
+    '<div class="api-loading"><span class="spinner">⟳</span> Pulling Assessor API…</div>';
+
+  if (window.innerWidth <= 768) card.scrollIntoView({ behavior: 'smooth' });
+
+  // Cached?
+  if (detailCache[apn]) {
+    body.innerHTML = renderFullDetail(p, detailCache[apn]);
+    return;
+  }
+
+  // Fetch
+  try {
+    const detail = await fetchParcelDetail(apn);
+    detailCache[apn] = detail;
+    if (selectedApn === apn) {
+      body.innerHTML = renderFullDetail(p, detail);
+    }
+  } catch (err) {
+    if (selectedApn === apn) {
+      body.innerHTML = renderQuickDetail(p) +
+        `<div class="api-error">API error: ${esc(err.message)}</div>`;
+    }
+  }
+}
+
+/* ── Quick detail (ArcGIS only) ── */
+function renderQuickDetail(p) {
+  let vc = '#888', vt = '? Insufficient address data';
+  if (p.addrStatus === 'MATCH') { vc = '#22cc66'; vt = '✓ Mailing matches — likely owner-occupied'; }
+  if (p.addrStatus === 'MISMATCH') { vc = '#ff4444'; vt = '✗ Mailing mismatch — likely absentee / rental'; }
+
+  return `
+    <div class="section">
+      <div class="section-title">OWNERSHIP (ArcGIS)</div>
+      <div class="field"><span class="field-label">Owner</span><span class="field-value bold">${esc(p.owner) || '—'}</span></div>
+      ${p.inCareOf ? `<div class="field"><span class="field-label">In Care Of</span><span class="field-value warn">${esc(p.inCareOf)}</span></div>` : ''}
+      ${p.isCorp ? `<div class="acc-link"><a href="${ACC_URL}?searchName=${encodeURIComponent(p.owner)}&searchType=EntityName" target="_blank" rel="noopener">🔍 AZ Corp Commission →</a></div>` : ''}
+    </div>
+    <div class="section">
+      <div class="section-title">ADDRESS COMPARISON</div>
+      <div class="field"><span class="field-label">Property</span><span class="field-value">${esc(p.physical) || '—'}</span></div>
+      <div class="field"><span class="field-label">Mailing</span><span class="field-value${p.addrStatus === 'MISMATCH' ? ' warn' : ''}">${esc(p.mail) || '— (none on file)'}</span></div>
+      ${p.mailState && p.mailState !== 'AZ' ? `<div class="out-of-state">⚠ Out-of-state: ${esc(p.mailState)} ${p.mailCountry && p.mailCountry !== 'US' ? '(' + esc(p.mailCountry) + ')' : ''}</div>` : ''}
+      <div class="addr-verdict" style="color:${vc}">${vt}</div>
+    </div>
+  `;
+}
+
+/* ── Full detail (ArcGIS + Assessor API) ── */
+function renderFullDetail(p, d) {
+  let html = '';
+
+  const get = (obj, ...keys) => {
+    if (!obj) return null;
+    for (const k of keys) {
+      if (obj[k] !== undefined && obj[k] !== null && obj[k] !== '') return obj[k];
+    }
+    return null;
+  };
+
+  const pData = d.parcel || {};
+  const oData = d.owner || {};
+  const rData = d.residential || {};
+  const vData = d.valuations || {};
+
+  /* ── RENTAL CHECK ── */
+  const rentalRaw = d.rental;
+  let isRental = false;
+  if (rentalRaw) {
+    const rArr = Array.isArray(rentalRaw) ? rentalRaw :
+                 rentalRaw?.Rentals || rentalRaw?.rentals ||
+                 rentalRaw?.data || rentalRaw?.results || [];
+    const rList = Array.isArray(rArr) ? rArr : [];
+    if (rList.length > 0) isRental = true;
+  }
+
+  html += `<div class="section">
+    <div class="section-title">RENTAL REGISTRY</div>
+    ${isRental
+      ? '<div class="rental-hit">⚠ REGISTERED RENTAL PROPERTY</div>'
+      : '<div class="rental-miss">✓ No rental registration found</div>'}
+  </div>`;
+
+  /* ── OWNERSHIP ── */
+  html += `<div class="section">
+    <div class="section-title">OWNERSHIP</div>
+    <div class="field"><span class="field-label">Owner</span><span class="field-value bold">${esc(p.owner) || '—'}</span></div>`;
+
+  const owner2 = get(oData, 'OwnerName2', 'owner_name_2', 'SecondaryOwner');
+  if (owner2) html += `<div class="field"><span class="field-label">Owner 2</span><span class="field-value">${esc(owner2)}</span></div>`;
+
+  const ico = get(oData, 'InCareOf', 'in_care_of', 'INCAREOF') || get(pData, 'InCareOf', 'in_care_of') || p.inCareOf;
+  if (ico) html += `<div class="field"><span class="field-label">In Care Of</span><span class="field-value warn">${esc(ico)}</span></div>`;
+
+  if (p.isCorp) {
+    html += `<div class="acc-link"><a href="${ACC_URL}?searchName=${encodeURIComponent(p.owner)}&searchType=EntityName" target="_blank" rel="noopener">🔍 Look up on AZ Corp Commission →</a></div>`;
+  }
+  html += '</div>';
+
+  /* ── ADDRESS COMPARISON ── */
+  let vc = '#888', vt = '? Insufficient data';
+  if (p.addrStatus === 'MATCH') { vc = '#22cc66'; vt = '✓ Mailing matches property — likely owner-occupied'; }
+  if (p.addrStatus === 'MISMATCH') { vc = '#ff4444'; vt = '✗ Mailing does NOT match — likely absentee / rental'; }
+
+  const apiMail = get(oData, 'MailingAddress', 'mailing_address') || p.mail;
+  const apiPhys = get(pData, 'PropertyAddress', 'property_address', 'SitusAddress') || p.physical;
+
+  html += `<div class="section">
+    <div class="section-title">ADDRESS COMPARISON</div>
+    <div class="field"><span class="field-label">Property</span><span class="field-value">${esc(apiPhys) || '—'}</span></div>
+    <div class="field"><span class="field-label">Mailing</span><span class="field-value${p.addrStatus === 'MISMATCH' ? ' warn' : ''}">${esc(apiMail) || '— (none on file)'}</span></div>
+    ${p.mailState && p.mailState !== 'AZ' ? `<div class="out-of-state">⚠ Out-of-state: ${esc(p.mailState)} ${p.mailCountry && p.mailCountry !== 'US' ? '(' + esc(p.mailCountry) + ')' : ''}</div>` : ''}
+    <div class="addr-verdict" style="color:${vc}">${vt}</div>
+  </div>`;
+
+  /* ── DEED & SALE ── */
+  const deedDate = get(pData, 'DeedDate', 'deed_date', 'DEED_DATE');
+  const deedNum = get(pData, 'DeedNumber', 'deed_number', 'RecordingNumber');
+  const saleDate = get(pData, 'SaleDate', 'sale_date', 'LastSaleDate');
+  const salePrice = get(pData, 'SalePrice', 'sale_price', 'LastSalePrice');
+  const da = calcDeedAge(deedDate) || p.deedAge;
+
+  let dc = '#ccc';
+  if (da) { if (da.years < 2) dc = '#22cc66'; else if (da.years >= 10) dc = '#ffaa00'; }
+
+  html += `<div class="section">
+    <div class="section-title">DEED &amp; SALE</div>
+    <div class="field"><span class="field-label">Deed Date</span><span class="field-value">${fmtDate(deedDate)}</span></div>
+    ${da ? `<div class="deed-age" style="color:${dc}">Tenure: ${da.label}${da.years < 2 ? ' — recent transfer' : ''}${da.years >= 10 ? ' — long-term holder' : ''}</div>` : ''}
+    <div class="field"><span class="field-label">Deed #</span><span class="field-value">${esc(deedNum) || 'N/A'}</span></div>
+    <div class="field"><span class="field-label">Last Sale</span><span class="field-value">${fmtDate(saleDate)}</span></div>
+    <div class="field"><span class="field-label">Sale Price</span><span class="field-value">${fmtCurrency(salePrice)}</span></div>
+  </div>`;
+
+  /* ── VALUATIONS ── */
+  if (vData) {
+    const vl = Array.isArray(vData) ? vData : vData?.Valuations || vData?.valuations || vData?.data || [];
+    if (Array.isArray(vl) && vl.length > 0) {
+      html += `<div class="section"><div class="section-title">VALUATION HISTORY</div>`;
+      vl.forEach(v => {
+        const yr = get(v, 'TaxYear', 'tax_year', 'Year') || '?';
+        const fcv = get(v, 'FCV', 'fcv', 'FullCashValue');
+        const lpv = get(v, 'LPV', 'lpv', 'LimitedPropertyValue');
+        html += `<div class="val-row"><span class="val-year">${esc(String(yr))}</span><span class="val-amount">FCV ${fmtCurrency(fcv)} · LPV ${fmtCurrency(lpv)}</span></div>`;
+      });
+      html += '</div>';
+    }
+  }
+
+  /* ── RESIDENTIAL ── */
+  if (rData && typeof rData === 'object') {
+    const sqft = get(rData, 'LivingArea', 'living_area', 'LivingSpace', 'GrossLivingArea');
+    const beds = get(rData, 'Bedrooms', 'bedrooms');
+    const baths = get(rData, 'Bathrooms', 'bathrooms', 'FullBaths');
+    const pool = get(rData, 'Pool', 'pool', 'HasPool');
+    const garage = get(rData, 'Garage', 'garage', 'GarageSpaces');
+    const yb = get(rData, 'YearBuilt', 'year_built', 'ConstructionYear') || get(pData, 'YearBuilt', 'year_built');
+    const stories = get(rData, 'Stories', 'stories');
+    const condition = get(rData, 'Condition', 'condition', 'Quality');
+
+    if (sqft || beds || baths || pool || garage || yb || stories) {
+      html += `<div class="section"><div class="section-title">RESIDENTIAL</div>`;
+      if (yb) html += `<div class="field"><span class="field-label">Year Built</span><span class="field-value">${esc(String(yb))}</span></div>`;
+      if (sqft) html += `<div class="field"><span class="field-label">Living Area</span><span class="field-value">${Number(sqft).toLocaleString()} sqft</span></div>`;
+      if (beds) html += `<div class="field"><span class="field-label">Beds</span><span class="field-value">${esc(String(beds))}</span></div>`;
+      if (baths) html += `<div class="field"><span class="field-label">Baths</span><span class="field-value">${esc(String(baths))}</span></div>`;
+      if (stories) html += `<div class="field"><span class="field-label">Stories</span><span class="field-value">${esc(String(stories))}</span></div>`;
+      if (pool) html += `<div class="field"><span class="field-label">Pool</span><span class="field-value">${esc(String(pool))}</span></div>`;
+      if (garage) html += `<div class="field"><span class="field-label">Garage</span><span class="field-value">${esc(String(garage))}</span></div>`;
+      if (condition) html += `<div class="field"><span class="field-label">Condition</span><span class="field-value">${esc(String(condition))}</span></div>`;
+      html += '</div>';
+    }
+  }
+
+  /* ── PARCEL ── */
+  const puc = get(pData, 'PUC', 'puc', 'PropertyUseCode') || '';
+  const pucDesc = get(pData, 'PUCDescription', 'puc_description') || '';
+  const jurisdiction = get(pData, 'Jurisdiction', 'jurisdiction') || '';
+  const lc = get(pData, 'LegalClass', 'legal_class') || '';
+
+  html += `<div class="section">
+    <div class="section-title">PARCEL</div>
+    <div class="field"><span class="field-label">APN</span><span class="field-value">${esc(p.apn)}</span></div>
+    ${puc ? `<div class="field"><span class="field-label">Use Code</span><span class="field-value">${esc(puc)} ${pucDesc ? '(' + esc(pucDesc) + ')' : ''}</span></div>` : ''}
+    ${lc ? `<div class="field"><span class="field-label">Legal Class</span><span class="field-value">${esc(lc)}</span></div>` : ''}
+    ${jurisdiction ? `<div class="field"><span class="field-label">Jurisdiction</span><span class="field-value">${esc(jurisdiction)}</span></div>` : ''}
+  </div>`;
+
+  /* ── ERRORS ── */
+  if (d.errors?.length) {
+    html += `<div class="section"><div class="section-title">API NOTES</div>
+      ${d.errors.map(e => `<div class="api-error">${esc(e)}</div>`).join('')}
+    </div>`;
+  }
+
+  /* ── RAW DUMP ── */
+  html += `<div class="section">
+    <details style="margin-top:8px">
+      <summary style="color:var(--dimmest); font-size:10px; cursor:pointer; letter-spacing:1px">RAW API RESPONSE</summary>
+      <pre style="font-size:9px; color:var(--ghost); white-space:pre-wrap; word-break:break-all; margin-top:8px; max-height:300px; overflow:auto; background:#080808; padding:8px; border-radius:3px">${esc(JSON.stringify(d, null, 2))}</pre>
+    </details>
+  </div>`;
+
+  return html;
+}
+
+function closeDetail() {
+  selectedApn = null;
+  document.getElementById('detail-card').style.display = 'none';
+  renderList();
+}
+</script>
+</body>
+</html>
