@@ -13,6 +13,7 @@
     display:flex;align-items:center;justify-content:center;
     height:100vh;flex-direction:column;gap:32px;
     overflow:hidden;
+    transition: background 1.5s ease;
   }
 
   /* Ambient grid */
@@ -23,12 +24,14 @@
       linear-gradient(90deg,rgba(0,255,170,0.03) 1px,transparent 1px);
     background-size:40px 40px;
     pointer-events:none;z-index:0;
+    transition: opacity 0.8s ease;
   }
 
   h1{
     font-size:32px;letter-spacing:8px;color:#00ffaa;
     text-shadow:0 0 30px rgba(0,255,170,0.3);
     position:relative;z-index:1;
+    transition: all 0.3s ease;
   }
 
   .subtitle{
@@ -64,14 +67,11 @@
   }
   a.svc:hover{background:rgba(0,204,255,0.08);border-color:#00ccff}
 
-  /* Elysia-colored links */
-  a.svc.elysia{color:#ff4466;border-color:rgba(255,68,102,0.3)}
-  a.svc.elysia:hover{background:rgba(255,68,102,0.08);border-color:#ff4466}
-
   /* Local service indicators */
   .dot{
     width:7px;height:7px;border-radius:50%;
     display:inline-block;flex-shrink:0;
+    transition: all 0.3s;
   }
   .dot.unknown{background:#333}
   .dot.on{background:#00ffaa;box-shadow:0 0 6px rgba(0,255,170,0.6)}
@@ -81,14 +81,186 @@
     font-size:10px;color:#333;letter-spacing:2px;
     position:relative;z-index:1;
   }
+
+  /* ═══ Blackwall Gate ═══ */
+  .blackwall-gate{
+    width:100%;position:relative;z-index:1;
+  }
+
+  .blackwall-trigger{
+    display:flex;align-items:center;gap:10px;
+    width:100%;padding:10px 20px;
+    background:transparent;
+    color:#ff4466;
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;letter-spacing:2px;
+    border:1px solid rgba(255,68,102,0.3);
+    border-radius:4px;
+    cursor:pointer;
+    transition:all 0.3s;
+    justify-content:center;
+  }
+  .blackwall-trigger:hover{
+    background:rgba(255,68,102,0.08);
+    border-color:#ff4466;
+  }
+  .blackwall-trigger .padlock{
+    font-size:12px;
+    transition: all 0.3s;
+  }
+
+  .blackwall-panel{
+    max-height:0;
+    overflow:hidden;
+    transition:max-height 0.4s ease, opacity 0.3s ease;
+    opacity:0;
+  }
+  .blackwall-panel.open{
+    max-height:200px;
+    opacity:1;
+  }
+
+  .pin-form{
+    display:flex;flex-direction:column;
+    align-items:center;gap:10px;
+    padding:16px 0 8px;
+  }
+
+  .pin-label{
+    font-size:9px;letter-spacing:3px;color:#555;
+  }
+
+  .pin-input{
+    background:#111;
+    border:1px solid rgba(255,68,102,0.2);
+    color:#e0e0e0;
+    padding:10px 16px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:16px;
+    text-align:center;
+    border-radius:4px;
+    letter-spacing:4px;
+    width:200px;
+    outline:none;
+    transition:border-color 0.2s;
+  }
+  .pin-input:focus{border-color:#ff4466}
+  .pin-input::placeholder{color:#333;letter-spacing:2px}
+
+  .pin-submit{
+    background:rgba(255,68,102,0.12);
+    border:1px solid rgba(255,68,102,0.3);
+    color:#ff4466;
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;font-weight:700;
+    letter-spacing:2px;
+    padding:8px 20px;
+    border-radius:4px;
+    cursor:pointer;
+    transition:all 0.2s;
+  }
+  .pin-submit:hover{
+    background:rgba(255,68,102,0.25);
+    border-color:#ff4466;
+  }
+  .pin-submit:disabled{
+    opacity:0.4;cursor:default;
+  }
+
+  .pin-error{
+    font-size:10px;color:#ff4444;
+    letter-spacing:2px;
+    min-height:16px;
+    transition: opacity 0.3s;
+  }
+
+  .dormant-msg{
+    text-align:center;
+    padding:20px 0 8px;
+    color:#333;
+    font-size:12px;
+    letter-spacing:2px;
+  }
+  .dormant-sub{
+    font-size:9px;color:#222;
+    margin-top:6px;letter-spacing:1px;
+  }
+
+  /* Shake animation for wrong PIN */
+  @keyframes shake{
+    0%,100%{transform:translateX(0)}
+    15%{transform:translateX(-6px)}
+    30%{transform:translateX(5px)}
+    45%{transform:translateX(-4px)}
+    60%{transform:translateX(3px)}
+    75%{transform:translateX(-2px)}
+  }
+  .shake{animation:shake 0.4s ease-out}
+
+  /* ═══ Breach Transition ═══ */
+  body.breaching{
+    background:#050002 !important;
+  }
+  body.breaching::before{
+    opacity:0 !important;
+  }
+  body.breaching h1{
+    color:#ff1744 !important;
+    text-shadow:0 0 40px rgba(255,23,68,0.6) !important;
+    animation:glitchText 0.2s steps(2) 4;
+  }
+  body.breaching .subtitle{
+    color:#ff1744;opacity:0.4;
+  }
+  body.breaching .services{
+    animation:fadeDown 0.8s ease forwards;
+  }
+  body.breaching .footer{
+    color:#ff1744;opacity:0.2;
+  }
+
+  @keyframes glitchText{
+    0%  {transform:translate(0);filter:none}
+    25% {transform:translate(-5px,2px);filter:hue-rotate(90deg)}
+    50% {transform:translate(4px,-1px);filter:hue-rotate(-45deg)}
+    75% {transform:translate(-3px,1px);filter:none}
+    100%{transform:translate(0)}
+  }
+  @keyframes fadeDown{
+    0%{opacity:1;transform:translateY(0)}
+    100%{opacity:0;transform:translateY(20px)}
+  }
+
+  /* Red scanlines during breach */
+  body.breaching::after{
+    content:'';
+    position:fixed;inset:0;
+    background:repeating-linear-gradient(
+      0deg,transparent 0px,transparent 3px,
+      rgba(255,23,68,0.04) 3px,rgba(255,23,68,0.04) 4px
+    );
+    pointer-events:none;z-index:10000;
+    animation:scanIn 0.6s ease-in forwards;
+  }
+  @keyframes scanIn{from{opacity:0}to{opacity:1}}
+
+  /* Red data rain overlay during breach */
+  #breach-rain{
+    display:none;
+    position:fixed;inset:0;
+    z-index:5;pointer-events:none;
+  }
+  body.breaching #breach-rain{display:block}
 </style>
 </head>
 <body>
 
-<h1>LAYER5</h1>
+<canvas id="breach-rain"></canvas>
+
+<h1 id="title">LAYER5</h1>
 <div class="subtitle">infrastructure</div>
 
-<div class="services">
+<div class="services" id="services">
 
   <div class="section-label">public</div>
   <a href="/menagerie/" class="svc">MENAGERIE</a>
@@ -96,42 +268,224 @@
   <a href="/hotdog/" class="svc">THE ASCENDED ONE</a>
 
   <div class="section-label">local services</div>
-  <a href="https://elysia.layer5.one" class="svc elysia">
-    <span class="dot unknown" id="elysiaDot"></span>
-    BLACKWALL DASHBOARD
-  </a>
-  <a href="https://bridge.layer5.one" class="svc elysia">
-    <span class="dot unknown" id="bridgeDot"></span>
-    BRIDGE CONTROL
-  </a>
+
+  <div class="blackwall-gate" id="blackwallGate">
+    <button class="blackwall-trigger" id="blackwallTrigger" onclick="expandBlackwall()">
+      <span class="dot unknown" id="blackwallDot"></span>
+      <span class="padlock" id="padlock">&#x1f512;</span>
+      BLACKWALL
+    </button>
+    <div class="blackwall-panel" id="blackwallPanel">
+      <div class="pin-form" id="pinForm">
+        <div class="pin-label">ENTER ACCESS CODE</div>
+        <input type="password" class="pin-input" id="pinInput" maxlength="32"
+               autocomplete="off" placeholder="......">
+        <button class="pin-submit" id="pinSubmit" onclick="submitPin()">AUTHENTICATE</button>
+        <div class="pin-error" id="pinError"></div>
+      </div>
+      <div class="dormant-msg" id="dormantMsg" style="display:none">
+        <div>SYSTEMS DORMANT</div>
+        <div class="dormant-sub">bridge offline &mdash; services unavailable</div>
+      </div>
+    </div>
+  </div>
 
 </div>
 
 <div class="footer">layer5.one</div>
 
 <script>
-// Ping local services to show live/dead status
-async function ping(url, dotId) {
-  const dot = document.getElementById(dotId);
-  if (!dot) return;
+const BRIDGE = 'https://bridge.layer5.one';
+let bridgeOnline = false;
+let panelOpen = false;
+
+// ─── Health check ───
+async function checkBridge() {
+  const dot = document.getElementById('blackwallDot');
   try {
-    const r = await fetch(url, {mode:'no-cors',cache:'no-store'});
-    // no-cors means we can't read status, but if fetch succeeds the host is up
-    dot.className = 'dot on';
-  } catch(e) {
+    const r = await fetch(BRIDGE + '/health', { cache: 'no-store' });
+    if (r.ok) {
+      dot.className = 'dot on';
+      bridgeOnline = true;
+    } else {
+      dot.className = 'dot off';
+      bridgeOnline = false;
+    }
+  } catch (e) {
     dot.className = 'dot off';
+    bridgeOnline = false;
   }
 }
 
-// Check local services
-ping('https://elysia.layer5.one/health', 'elysiaDot');
-ping('https://bridge.layer5.one/health', 'bridgeDot');
+// Check if we already have a valid token
+async function checkExistingAuth() {
+  const token = localStorage.getItem('layer5_token');
+  if (!token) return false;
+  try {
+    const r = await fetch(BRIDGE + '/api/gate/verify', {
+      headers: { 'Authorization': 'Bearer ' + token },
+    });
+    const d = await r.json();
+    return d.valid === true;
+  } catch (e) {
+    return false;
+  }
+}
 
-// Re-check every 30s
-setInterval(() => {
-  ping('https://elysia.layer5.one/health', 'elysiaDot');
-  ping('https://bridge.layer5.one/health', 'bridgeDot');
-}, 30000);
+// ─── Blackwall panel ───
+async function expandBlackwall() {
+  const panel = document.getElementById('blackwallPanel');
+
+  if (panelOpen) {
+    panel.classList.remove('open');
+    panelOpen = false;
+    return;
+  }
+
+  // Check if already authenticated
+  const authed = await checkExistingAuth();
+  if (authed) {
+    startTransition(localStorage.getItem('layer5_token'));
+    return;
+  }
+
+  panelOpen = true;
+  panel.classList.add('open');
+
+  if (!bridgeOnline) {
+    document.getElementById('pinForm').style.display = 'none';
+    document.getElementById('dormantMsg').style.display = 'block';
+  } else {
+    document.getElementById('pinForm').style.display = 'flex';
+    document.getElementById('dormantMsg').style.display = 'none';
+    setTimeout(() => document.getElementById('pinInput').focus(), 300);
+  }
+}
+
+// ─── PIN submission ───
+async function submitPin() {
+  const input = document.getElementById('pinInput');
+  const pin = input.value.trim();
+  const err = document.getElementById('pinError');
+  const btn = document.getElementById('pinSubmit');
+
+  if (!pin) { input.focus(); return; }
+
+  btn.disabled = true;
+  btn.textContent = '...';
+  err.textContent = '';
+
+  try {
+    const r = await fetch(BRIDGE + '/api/gate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin }),
+    });
+    const d = await r.json();
+
+    if (d.ok && d.token) {
+      localStorage.setItem('layer5_token', d.token);
+      startTransition(d.token);
+    } else {
+      // Wrong PIN
+      err.textContent = 'ACCESS DENIED';
+      input.value = '';
+      input.focus();
+      btn.disabled = false;
+      btn.textContent = 'AUTHENTICATE';
+
+      // Shake
+      const panel = document.getElementById('blackwallPanel');
+      panel.classList.add('shake');
+      setTimeout(() => panel.classList.remove('shake'), 500);
+    }
+  } catch (e) {
+    err.textContent = 'BRIDGE UNREACHABLE';
+    btn.disabled = false;
+    btn.textContent = 'AUTHENTICATE';
+  }
+}
+
+// Enter key submits
+document.getElementById('pinInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); submitPin(); }
+});
+
+// ─── Breach transition ───
+function startTransition(token) {
+  // Start the red data rain
+  startBreachRain();
+
+  // Apply breach class — triggers all CSS transitions
+  document.body.classList.add('breaching');
+
+  // Disable interaction
+  document.getElementById('pinSubmit').disabled = true;
+  document.getElementById('pinInput').disabled = true;
+  document.getElementById('blackwallTrigger').disabled = true;
+
+  // Change padlock to unlocked
+  document.getElementById('padlock').textContent = '\u{1f513}';
+
+  // After animation completes, cross the Blackwall
+  setTimeout(() => {
+    window.location.href = 'https://elysia.layer5.one?token=' + token;
+  }, 2000);
+}
+
+// ─── Red data rain canvas (breach effect) ───
+function startBreachRain() {
+  const canvas = document.getElementById('breach-rain');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+
+  canvas.width = window.innerWidth * dpr;
+  canvas.height = window.innerHeight * dpr;
+  canvas.style.width = window.innerWidth + 'px';
+  canvas.style.height = window.innerHeight + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  const W = window.innerWidth;
+  const H = window.innerHeight;
+  const cols = Math.floor(W / 14);
+  const drops = new Array(cols).fill(0).map(() => Math.random() * -H);
+  const chars = 'ABCDEF0123456789.:;|/\\[]{}()'.split('');
+  let alpha = 0;
+
+  function draw() {
+    ctx.fillStyle = 'rgba(5,0,2,0.12)';
+    ctx.fillRect(0, 0, W, H);
+
+    alpha = Math.min(alpha + 0.02, 0.7);
+    ctx.font = '11px "JetBrains Mono", monospace';
+
+    for (let i = 0; i < cols; i++) {
+      const ch = chars[Math.floor(Math.random() * chars.length)];
+      const x = i * 14;
+      const y = drops[i];
+
+      // Lead character — bright
+      ctx.fillStyle = `rgba(255,23,68,${alpha})`;
+      ctx.fillText(ch, x, y);
+
+      // Trail — dimmer
+      ctx.fillStyle = `rgba(255,23,68,${alpha * 0.3})`;
+      ctx.fillText(chars[Math.floor(Math.random() * chars.length)], x, y - 14);
+
+      drops[i] += 10 + Math.random() * 6;
+      if (drops[i] > H && Math.random() > 0.97) {
+        drops[i] = Math.random() * -40;
+      }
+    }
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+// ─── Init ───
+checkBridge();
+setInterval(checkBridge, 30000);
 </script>
 
 </body>
