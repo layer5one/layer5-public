@@ -260,6 +260,7 @@ let backendType = null; // 'local' or 'hf'
 // --- Backend detection ---
 const BACKENDS = [
   { name: 'local', url: 'https://bridge.layer5.one', endpoint: '/api/slurpee/chat', healthCheck: '/health' },
+  { name: 'hf-space', url: 'https://taykso-slurpee-inference.hf.space', endpoint: '/v1/chat/completions', healthCheck: '/health' },
 ];
 
 async function detectBackend() {
