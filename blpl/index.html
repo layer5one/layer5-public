@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Barely Legal Paralegal</title>
+<link href="https://fonts.googleapis.com/css2?family=Damion&display=swap" rel="stylesheet">
+<style>
+    body {
+        background-color: #050505;
+        color: #ffffff;
+        margin: 0;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-family: system-ui, -apple-system, sans-serif;
+        overflow: hidden;
+    }
+
+    /* Pure CSS Cursive Neon Logo */
+    h1 {
+        font-family: 'Damion', cursive;
+        font-size: 5.5rem;
+        color: #ffffff;
+        text-shadow:
+            0 0 5px #fff,
+            0 0 10px #fff,
+            0 0 20px #ff00de,
+            0 0 40px #ff00de,
+            0 0 80px #ff00de,
+            0 0 100px #ff00de;
+        animation: flicker 2s infinite alternate;
+        margin-bottom: 3rem;
+        text-align: center;
+        line-height: 1.1;
+        font-weight: normal;
+    }
+
+    /* Subtle flicker to mimic a struggling neon tube */
+    @keyframes flicker {
+        0%, 18%, 22%, 25%, 53%, 57%, 100% {
+            text-shadow:
+                0 0 5px #fff,
+                0 0 10px #fff,
+                0 0 20px #ff00de,
+                0 0 40px #ff00de,
+                0 0 80px #ff00de;
+            opacity: 1;
+        }
+        20%, 24%, 55% {
+            text-shadow: none;
+            opacity: 0.4;
+        }
+    }
+
+    .form-container {
+        display: flex;
+        flex-direction: column;
+        gap: 1.8rem;
+        align-items: center;
+        width: 100%;
+        max-width: 450px;
+    }
+
+    /* Custom File Input Styling */
+    input[type="file"] {
+        width: 100%;
+        padding: 12px;
+        background: #111;
+        border: 1px solid #333;
+        border-radius: 8px;
+        color: #888;
+        cursor: pointer;
+        transition: border-color 0.3s ease;
+    }
+
+    input[type="file"]:hover {
+        border-color: #ff00de;
+    }
+
+    input[type="file"]::file-selector-button {
+        background: #1a1a1a;
+        color: #ff00de;
+        border: 1px solid #ff00de;
+        padding: 8px 16px;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-right: 15px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+
+    input[type="file"]::file-selector-button:hover {
+        background: #ff00de;
+        color: #000;
+        box-shadow: 0 0 15px rgba(255, 0, 222, 0.5);
+    }
+
+    /* Start Case Button Styling */
+    button {
+        padding: 14px 40px;
+        font-size: 1.2rem;
+        font-weight: bold;
+        background: transparent;
+        color: #fff;
+        border: 2px solid #ff00de;
+        border-radius: 30px;
+        cursor: pointer;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        transition: all 0.3s ease;
+        box-shadow: 0 0 15px rgba(255, 0, 222, 0.2), inset 0 0 10px rgba(255, 0, 222, 0.1);
+    }
+
+    button:hover {
+        background: #ff00de;
+        color: #050505;
+        box-shadow: 0 0 30px rgba(255, 0, 222, 0.8), inset 0 0 20px rgba(255, 0, 222, 0.5);
+        text-shadow: none;
+    }
+</style>
+</head>
+<body>
+
+    <h1>Barely Legal<br>Paralegal</h1>
+    
+    <div class="form-container">
+        <input type="file" id="caseUpload" multiple>
+        <button id="startBtn">Start Case</button>
+    </div>
+
+</body>
+</html>
