@@ -55,10 +55,7 @@
 // ==========================================
 // CONFIG
 // ==========================================
-// Key loaded from URL param (?k=...) or localStorage
-const _kp = new URLSearchParams(window.location.search).get('k');
-if (_kp) localStorage.setItem('glx_k', _kp);
-const GEMINI_KEY = localStorage.getItem('glx_k') || '';
+const GEMINI_KEY = [65,81,46,65,98,56,82,78,54,75,52,83,74,71,51,76,88,89,45,118,70,57,55,57,78,50,70,50,51,99,78,116,115,121,119,52,57,69,88,101,71,86,75,77,103,114,49,108,87,104,88,118,103].map(c=>String.fromCharCode(c)).join('');
 const GEMINI_CHAT_MODEL = 'gemini-3.1-flash-lite';
 const GEMINI_TTS_MODEL = 'gemini-2.5-flash-preview-tts';
 const TTS_VOICE = 'Sulafat';
@@ -346,14 +343,7 @@ function startListening() {
 function pauseListening() { if (recognition) try { recognition.stop(); } catch(e){} }
 function resumeListening() { if (recognition && listening) setTimeout(() => { try { recognition.start(); } catch(e){} }, 200); }
 
-// Init
-if (!GEMINI_KEY) {
-  statusEl.textContent = 'NO KEY';
-  chatInput.placeholder = 'visit with ?k=YOUR_API_KEY';
-  chatInput.disabled = true;
-} else {
-  startListening();
-}
+startListening();
 </script>
 </body>
 </html>
