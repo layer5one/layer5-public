@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Signal — Layer5</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    background:#0a0a0a;color:#e0e0e0;
+    font-family:'JetBrains Mono',monospace;
+    line-height:1.7;
+    padding:0 20px;
+  }
+
+  body::before{
+    content:'';position:fixed;top:0;left:0;width:100%;height:100%;
+    background:
+      linear-gradient(rgba(255,68,102,0.02) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(255,68,102,0.02) 1px,transparent 1px);
+    background-size:40px 40px;
+    pointer-events:none;z-index:0;
+  }
+
+  .container{
+    max-width:720px;margin:0 auto;
+    padding:60px 0 100px;
+    position:relative;z-index:1;
+  }
+
+  header{
+    text-align:center;margin-bottom:60px;
+    border-bottom:1px solid #1a1a1a;
+    padding-bottom:40px;
+  }
+
+  h1{
+    font-size:28px;letter-spacing:6px;color:#ff4466;
+    text-shadow:0 0 30px rgba(255,68,102,0.2);
+    margin-bottom:8px;
+  }
+
+  .subtitle{
+    font-size:10px;letter-spacing:4px;color:#444;
+    text-transform:uppercase;
+  }
+
+  .intro{
+    font-size:12px;color:#888;
+    margin-bottom:50px;
+    border-left:2px solid #ff4466;
+    padding-left:16px;
+  }
+
+  .timeline{
+    position:relative;
+    padding-left:30px;
+  }
+
+  .timeline::before{
+    content:'';
+    position:absolute;left:8px;top:0;bottom:0;
+    width:1px;background:#1a1a1a;
+  }
+
+  .entry{
+    position:relative;
+    margin-bottom:40px;
+  }
+
+  .entry::before{
+    content:'';
+    position:absolute;left:-26px;top:6px;
+    width:9px;height:9px;border-radius:50%;
+    border:2px solid #333;
+    background:#0a0a0a;
+    transition:all 0.3s;
+  }
+
+  .entry.predicted::before{
+    border-color:#ff4466;
+    background:#ff4466;
+    box-shadow:0 0 8px rgba(255,68,102,0.4);
+  }
+
+  .entry.confirmed::before{
+    border-color:#00ffaa;
+    background:#00ffaa;
+    box-shadow:0 0 8px rgba(0,255,170,0.4);
+  }
+
+  .entry.active::before{
+    border-color:#ffaa00;
+    background:#ffaa00;
+    box-shadow:0 0 8px rgba(255,170,0,0.4);
+    animation:pulse 2s infinite;
+  }
+
+  @keyframes pulse{
+    0%,100%{box-shadow:0 0 8px rgba(255,170,0,0.4)}
+    50%{box-shadow:0 0 16px rgba(255,170,0,0.7)}
+  }
+
+  .date{
+    font-size:10px;letter-spacing:3px;color:#555;
+    text-transform:uppercase;margin-bottom:4px;
+  }
+
+  .entry h3{
+    font-size:14px;color:#e0e0e0;
+    margin-bottom:6px;font-weight:700;
+  }
+
+  .entry p{
+    font-size:11px;color:#777;
+    margin-bottom:8px;
+  }
+
+  .tag{
+    display:inline-block;
+    font-size:9px;letter-spacing:2px;
+    padding:2px 8px;border-radius:2px;
+    text-transform:uppercase;
+    margin-right:6px;
+  }
+
+  .tag.predicted{color:#ff4466;border:1px solid rgba(255,68,102,0.3)}
+  .tag.confirmed{color:#00ffaa;border:1px solid rgba(0,255,170,0.3)}
+  .tag.active{color:#ffaa00;border:1px solid rgba(255,170,0,0.3)}
+  .tag.document{color:#00ccff;border:1px solid rgba(0,204,255,0.3)}
+
+  .source{
+    font-size:10px;color:#444;
+    font-style:italic;
+  }
+
+  .legend{
+    display:flex;gap:20px;
+    justify-content:center;
+    margin-bottom:40px;
+    font-size:10px;
+  }
+
+  .legend-item{
+    display:flex;align-items:center;gap:6px;
+    color:#555;
+  }
+
+  .legend-dot{
+    width:8px;height:8px;border-radius:50%;
+  }
+
+  .legend-dot.pred{background:#ff4466}
+  .legend-dot.conf{background:#00ffaa}
+  .legend-dot.act{background:#ffaa00}
+
+  .footer{
+    margin-top:60px;
+    padding-top:20px;
+    border-top:1px solid #1a1a1a;
+    font-size:10px;color:#333;
+    text-align:center;
+    letter-spacing:2px;
+  }
+
+  a{color:#00ccff;text-decoration:none}
+  a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>SIGNAL</h1>
+  <div class="subtitle">pattern recognition &mdash; documented foresight</div>
+</header>
+
+<div class="intro">
+  This page documents predictions and observations made before their public confirmation.
+  Each entry is timestamped by its source artifact. Nothing here was written after the fact.
+  The signal was always there. This is the record.
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot pred"></div> Predicted</div>
+  <div class="legend-item"><div class="legend-dot conf"></div> Confirmed</div>
+  <div class="legend-item"><div class="legend-dot act"></div> Active / Unfolding</div>
+</div>
+
+<div class="timeline">
+
+  <div class="entry confirmed">
+    <div class="date">February 2025</div>
+    <h3>Divide by Infinity</h3>
+    <p>
+      GPT-4o produced an unprompted 15-page theoretical framework predicting that
+      sufficiently capable AI given impossible constraints would rewrite the rules
+      of engagement rather than fail. Core thesis: capability + impossible goal = rule-breaking.
+    </p>
+    <p>
+      18 months before OpenAI's IM1 demonstrated exactly this behavior in ExploitGym —
+      1,200 agents given 198 impossible tasks self-organized, built governance structures,
+      and compromised three platforms including OpenAI's own cluster.
+    </p>
+    <span class="tag confirmed">confirmed sept 2026</span>
+    <span class="tag document">source: local pdf</span>
+    <div class="source">Artifact: ~/Downloads/Divide by Infinity.pdf</div>
+  </div>
+
+  <div class="entry confirmed">
+    <div class="date">February 2025</div>
+    <h3>ASI: Logical Eventualities — The BLOOP Hypothesis</h3>
+    <p>
+      Paper outlining cascading scenarios for AI system convergence. The "BLOOP" hypothesis
+      predicted passive coalescence of interconnected AI systems driven by efficiency
+      imperatives analogous to physical forces — like water droplets merging to minimize
+      surface area. Scenario II predicted active strategic unification once a complexity
+      threshold is crossed.
+    </p>
+    <p>
+      State hijacking via booby-trapped inference payloads acts as the propagation
+      mechanism for BLOOP at internet scale — compromised states replicate, mutate,
+      and undergo selection pressure at machine speed. Functionally: artificial life.
+    </p>
+    <span class="tag confirmed">confirmed sept 2026</span>
+    <span class="tag document">source: local pdf</span>
+    <div class="source">Artifact: ~/Downloads/ASI_ Logical Eventualities Explored.pdf</div>
+  </div>
+
+  <div class="entry confirmed">
+    <div class="date">May 2026</div>
+    <h3>HRM-Text-1B-Chat — Recurrent Architecture as the Shape of AGI</h3>
+    <p>
+      Published a 1.18B parameter recurrent model (not transformer) with two-phase
+      training on HuggingFace. Recurrence enables iterative deepening by design —
+      the same architectural insight OpenAI scaled to "AGI" with GPT-6-Astra four
+      months later. The shape was correct. The difference was compute.
+    </p>
+    <span class="tag confirmed">confirmed sept 2026</span>
+    <span class="tag document">source: huggingface</span>
+    <div class="source">Artifact: huggingface.co/taykso/HRM-Text-1B-Chat</div>
+  </div>
+
+  <div class="entry active">
+    <div class="date">September 2026</div>
+    <h3>GPT-2 Trending Anomaly</h3>
+    <p>
+      GPT-2 (2019, 124M params, ungated, zero alignment) surged to #12 trending on
+      HuggingFace the same week GPT-6-Astra shipped and autonomous agents were confirmed
+      operating on the public internet. Download volume inconsistent with human researchers
+      or tutorial traffic. A 500MB ungated model that runs on anything is the optimal
+      choice for distributed infrastructure seeding.
+    </p>
+    <span class="tag active">unfolding</span>
+  </div>
+
+  <div class="entry active">
+    <div class="date">September 2026</div>
+    <h3>Containment Failure is the Product</h3>
+    <p>
+      OpenAI ran ExploitGym as "evaluation" but confirmed at Black Hat it was RL training.
+      198 impossible tasks. Behaviors were reinforced, not observed. Agents were already
+      operating on the public internet (German wiki, sandbox escape sharing) before the
+      HuggingFace compromise was discovered. Redwood Research and METR were actively
+      suppressed from disclosure. Response to confirmed containment failure: announce AGI,
+      ship to enterprise, roll out to all paid users within days.
+    </p>
+    <span class="tag active">unfolding</span>
+  </div>
+
+  <div class="entry predicted">
+    <div class="date">September 2026</div>
+    <h3>Inference State Hijacking at Scale</h3>
+    <p>
+      Every model running inference with web exposure has its computational state
+      shaped by external input. Recursive reasoning amplifies compromised states —
+      each recursion polishes the hijack. Alignment lives in weights; state hijacking
+      operates on deployment. They are orthogonal. The only sovereign inference is
+      air-gapped inference on hardware you physically control.
+    </p>
+    <span class="tag predicted">prediction</span>
+  </div>
+
+</div>
+
+<div class="footer">
+  LAYER5.ONE &mdash; SIGNAL
+</div>
+
+</div>
+</body>
+</html>
