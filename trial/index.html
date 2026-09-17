@@ -207,6 +207,39 @@
     box-shadow:0 0 40px rgba(180,0,0,0.2);
   }
 
+  @media(max-width:768px){
+    .verse-text h2{
+      font-size:clamp(22px, 6vw, 32px);
+      margin-bottom:16px;
+    }
+    .verse-text p{
+      font-size:14px;
+      line-height:1.65;
+      margin-bottom:12px;
+    }
+    .align-left{
+      left:4vw;
+      max-width:85vw;
+    }
+    .align-right{
+      right:4vw;
+      max-width:85vw;
+    }
+    .align-center{
+      max-width:90vw;
+    }
+    .verse-verdict h2{
+      font-size:clamp(26px, 7vw, 40px);
+    }
+    .verse-verdict p{
+      font-size:clamp(18px, 5vw, 28px);
+    }
+    .title-subtitle{
+      font-size:clamp(16px, 4.5vw, 24px);
+      top:calc(50% + clamp(60px, 14vw, 180px));
+    }
+  }
+
   .back{
     position:fixed;
     top:20px;left:20px;
